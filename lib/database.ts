@@ -170,7 +170,8 @@ export class ProductDatabase {
       console.error('Błąd zapisywania danych:', error);
       
       if (typeof window !== 'undefined') {
-        this.showToast(`Błąd zapisu: ${error.message}`, 'error');
+        const errorMessage = error instanceof Error ? error.message : 'Nieznany błąd';
+        this.showToast(`Błąd zapisu: ${errorMessage}`, 'error');
       }
       
       throw error;
