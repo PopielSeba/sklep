@@ -98,10 +98,12 @@ export class ProductDatabase {
       }
 
       console.log('Ładowanie danych z GitHub...');
-      const response = await fetch('https://raw.githubusercontent.com/PopielSeba/prostysklep-data/main/data.json', {
-        cache: 'no-cache',
+      
+      // Używamy GitHub API zamiast raw.githubusercontent.com aby uniknąć problemów z CORS
+      const response = await fetch('https://api.github.com/repos/PopielSeba/prostysklep-data/contents/data.json', {
         headers: {
-          'Cache-Control': 'no-cache'
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'prostysklep-app'
         }
       });
 
@@ -109,7 +111,15 @@ export class ProductDatabase {
         throw new Error(`GitHub API błąd: ${response.status}`);
       }
 
-      const githubData = await response.json();
+      const fileData = await response.json();
+      
+      // Dekoduj zawartość pliku z base64
+      if (!fileData.content) {
+        throw new Error('Brak zawartości pliku');
+      }
+      
+      const decodedContent = atob(fileData.content.replace(/\n/g, ''));
+      const githubData = JSON.parse(decodedContent);
       
       // Walidacja schematu
       this.validateSchema(githubData);
