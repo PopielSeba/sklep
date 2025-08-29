@@ -6,6 +6,7 @@ import { ProductDatabase } from '../lib/database';
 
 interface ProductGridProps {
   selectedCategory: string;
+  searchTerm: string;
 }
 
 interface Product {
@@ -21,7 +22,7 @@ interface Product {
   stock?: number;
 }
 
-export default function ProductGrid({ selectedCategory }: ProductGridProps) {
+export default function ProductGrid({ selectedCategory, searchTerm }: ProductGridProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('+48571294344');
@@ -35,7 +36,7 @@ export default function ProductGrid({ selectedCategory }: ProductGridProps) {
       'Narzędzia': 'narzędzia',
       'Zbiorniki': 'zbiorniki'
     };
-    return categoryMap[categoryName] || categoryName.toLowerCase().replace(/\\s+/g, '_');
+    return categoryMap[categoryName] || categoryName.toLowerCase().replace(/\s+/g, '_');
   };
 
   const loadData = () => {
@@ -77,9 +78,19 @@ export default function ProductGrid({ selectedCategory }: ProductGridProps) {
     };
   }, []);
 
-  const filteredProducts = selectedCategory === 'wszystko' 
-    ? products 
-    : products.filter(product => product.category === selectedCategory);
+  // Filtrowanie produktów
+  const filteredProducts = products.filter(product => {
+    // Filtrowanie po kategorii
+    const categoryMatch = selectedCategory === 'wszystko' || product.category === selectedCategory;
+    
+    // Filtrowanie po wyszukiwanej frazie
+    const searchMatch = !searchTerm || 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return categoryMatch && searchMatch;
+  });
 
   const openProductDetail = (product: Product) => {
     setSelectedProduct(product);
@@ -94,7 +105,14 @@ export default function ProductGrid({ selectedCategory }: ProductGridProps) {
       <div className="text-center py-12">
         <div className="bg-white/95 backdrop-blur-sm rounded-lg p-8 shadow-lg">
           <i className="ri-inbox-line text-6xl text-gray-300 mb-4"></i>
-          <p className="text-gray-500 text-lg">Brak produktów w wybranej kategorii</p>
+          <p className="text-gray-500 text-lg">
+            {searchTerm ? 'Brak produktów pasujących do wyszukiwania' : 'Brak produktów w wybranej kategorii'}
+          </p>
+          {searchTerm && (
+            <p className="text-gray-400 text-sm mt-2">
+              Szukano: "{searchTerm}"
+            </p>
+          )}
         </div>
       </div>
     );
